@@ -1,5 +1,3 @@
-/*Quản lý sinh viên 1 trường đại học dùng Linked List*/
-
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -27,9 +25,6 @@ struct Node {
 
 typedef Node* ListSV;
 
-/*2. Nhập vào Danh sách sinh viên ListSV, và in ra Danh sách sinh viên được sắp xếp tăng dần theo mã sinh viên. 
-Hãy viết hàm thêm một sinh viên mới vào danh sách ListSV đã sắp xếp và SV được sắp xếp theo đúng thứ tự ở DS mới.*/
-
 ListSV createNode(SinhVien x) {
     Node* p = new Node;
     p->data = x;
@@ -37,7 +32,6 @@ ListSV createNode(SinhVien x) {
     return p;
 }
 
-//Thêm một Node và cuối danh sách
 void insertTail(ListSV &head, SinhVien &x) {
     Node* p = createNode(x);
     if (head == NULL) {
@@ -51,82 +45,112 @@ void insertTail(ListSV &head, SinhVien &x) {
     }
 }
 
-void read_CSV(){
-    ifstream file ("data.csv");
-    
-    if (!file.is_open()) {
-        cout << "Khong the mo file" << endl;
+void readCSV(ListSV &head) {
+    ifstream fileIn("D:/Project/ET2100-DSA/baiKiemTra/Bai1/data.csv", ios::in);
+    if (fileIn.fail()) {
+        cout << "File khong ton tai";
         return;
     }
-    SinhVien sv;
-    ListSV head = NULL;
-    while (!file.eof()) {
-        file.getline(sv.maSV, 8, ',');
-        file.getline(sv.hoTen, 50, ',');
-        file >> sv.gioiTinh;
-        file.ignore();
-        file >> sv.ngaySinh.ngay;
-        file.ignore();
-        file >> sv.ngaySinh.thang;
-        file.ignore();
-        file >> sv.ngaySinh.nam;
-        file.ignore();
-        file.getline(sv.diaChi, 100, ',');
-        file.getline(sv.lop, 12, ',');
-        file.getline(sv.khoa, 7);
+    while (!fileIn.eof()) {
+        SinhVien sv;
+        fileIn.getline(sv.maSV, 8, ',');
+        fileIn.getline(sv.hoTen, 50, ',');
+        fileIn >> sv.gioiTinh;
+        fileIn.ignore();
+        char ngaySinh[11];
+        fileIn.getline(ngaySinh, 11, ',');
+        sscanf(ngaySinh, "%d/%d/%d", &sv.ngaySinh.ngay, &sv.ngaySinh.thang, &sv.ngaySinh.nam);
+
+        fileIn.getline(sv.diaChi, 100, ',');
+        fileIn.getline(sv.lop, 12, ',');
+        fileIn.getline(sv.khoa, 7, '\n');
         insertTail(head, sv);
     }
-
+    fileIn.close();
 }
 
-//QuickSort sinh viên theo mã sinh viên
+int strcmp(const char *str1, const char *str2) {
+    while (*str1 && (*str1 == *str2)) {
+        str1++;
+        str2++;
+    }
+    return *(unsigned char *)str1 - *(unsigned char *)str2;
+}
 
-void partition(ListSV &head, ListSV &head1, ListSV &head2) {
-    Node* p = head;
-    while (p != NULL) {
-        if (p->data.maSV[0] == 'A') {
-            insertTail(head1, p->data);
-        } else {
-            insertTail(head2, p->data);
+Node* partition(ListSV low, ListSV high) {
+    SinhVien pivot = high->data;
+    ListSV i = low;
+
+    for (ListSV j = low; j != high; j = j->link) {
+        if (strcmp(j->data.maSV, pivot.maSV) < 0) {
+            swap(i->data, j->data);
+            i = i->link;
         }
-        p = p->link;
+    }
+    swap(i->data, high->data);
+    return i;
+}
+
+void quickSort(ListSV low, ListSV high) {
+    if (low != NULL && high != NULL && low != high && low != high->link) {
+        ListSV pi = partition(low, high);
+        quickSort(low, pi);
+        quickSort(pi->link, high);
     }
 }
 
-void quickSort(ListSV &head) {
-    if (head == NULL || head->link == NULL) {
-        return;
-    }
-    ListSV head1 = NULL, head2 = NULL;
-    partition(head, head1, head2);
-    quickSort(head1);
-    quickSort(head2);
-    if (head1 == NULL) {
-        head = head2;
-    } else {
-        head = head1;
-        Node* p = head1;
-        while (p->link != NULL) {
-            p = p->link;
-        }
-        p->link = head2;
-    }
+void addStudent(ListSV &head, SinhVien &sv) {
+    cout << "Nhap ma sinh vien (dinh dang 6 ky tu ): ";
+    cin.ignore();
+    cin.getline(sv.maSV, 8);
+    cout << "Nhap ho ten: ";
+    cin.getline(sv.hoTen, 50);
+    cout << "Nhap gioi tinh: ";
+    cin >> sv.gioiTinh;
+    cin.ignore(); // Clear the newline character from the input buffer
+    cout << "Nhap ngay sinh (dd mm yyyy): ";
+    cin >> sv.ngaySinh.ngay >> sv.ngaySinh.thang >> sv.ngaySinh.nam;
+    cin.ignore(); // Clear the newline character from the input buffer
+    cout << "Nhap dia chi: ";
+    cin.getline(sv.diaChi, 100);
+    cout << "Nhap lop: ";
+    cin.getline(sv.lop, 12);
+    cout << "Nhap khoa: ";
+    cin.getline(sv.khoa, 7);
+    insertTail(head, sv);
 }
 
 void printList(ListSV head) {
-    Node* p = head;
-    while (p != NULL) {
-        cout << p->data.maSV << " " << p->data.hoTen << " " << p->data.gioiTinh << " " << p->data.ngaySinh.ngay << "/" << p->data.ngaySinh.thang << "/" << p->data.ngaySinh.nam << " " << p->data.diaChi << " " << p->data.lop << " " << p->data.khoa << endl;
-        p = p->link;
+    for (Node* p = head; p != NULL; p = p->link) {
+        cout << p->data.maSV << ". " << p->data.hoTen << ", " << p->data.ngaySinh.ngay << "/" << p->data.ngaySinh.thang << "/" << p->data.ngaySinh.nam << endl;
     }
 }
 
+Node* getTail(ListSV head) {
+    while (head != NULL && head->link != NULL) {
+        head = head->link;
+    }
+    return head;
+}
+
 int main() {
-    SinhVien sv;
     ListSV head = NULL;
-    read_CSV();
-    quickSort(head);
+    SinhVien sv;
+    readCSV(head);
+    quickSort(head, getTail(head));
+    printList(head);
+    cout << "Co muon nhap them khong ? (Y/N): ";
+    char choice;
+    cin >> choice;
+    if (choice == 'N' || choice == 'n') {
+        return 0;
+    }
+    else if (choice != 'Y' && choice != 'y') {
+        cout << "Lua chon khong hop le";
+        return 1;
+    }
+    addStudent(head, sv);
+    quickSort(head, getTail(head));
     printList(head);
     return 0;
 }
-
